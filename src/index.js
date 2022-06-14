@@ -48,6 +48,9 @@ app.get("/todos", checksExistsUserAccount, (request, response) => {
   response.status(200).json(todos);
 });
 
+
+
+
 app.post("/todos", checksExistsUserAccount, (request, response) => {
   const { title,deadline } = request.body;
   const { user } = request;
@@ -76,11 +79,11 @@ app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
        todo.deadline = new Date(deadline);
        todo.title = title;
 
-     return response.status(201).json(todo);
+     return response.status(200).json(todo);
      }
    });
 
-  return response.status(400).json({ error: "invalid operation" });
+  return response.status(404).json({ error: "invalid operation" });
 });
 
 app.patch("/todos/:id/done", checksExistsUserAccount, (request, response) => {
@@ -104,10 +107,12 @@ app.delete("/todos/:id", checksExistsUserAccount, (request, response) => {
      console.log(id)
 
      const filterTodo = user.todos.filter((todo)=> todo.id == id);
-     if(!filterTodo){
-      return response.status(400).json({error:"Todo não encontrado"});
+     console.log("aqui",filterTodo)
+     if(filterTodo.length == 0){
+      return response.status(404).json({error:"Todo não encontrado"});
      }
-     user.todos.splice(filterTodo,1)
+     const teste  = user.todos.indexOf(filterTodo[0]);
+     user.todos.splice(teste,1);
      return response.status(200).json(user.todos);
 });
 
