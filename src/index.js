@@ -12,103 +12,103 @@ const users = [];
 
 function checksExistsUserAccount(request, response, next) {
   const { username } = request.headers;
-  console.log(username);
-  const userExist = users.find((user) => user.username === username);
-
-  if (!userExist) {
-    return response.status(400).json({ error: "Invalid User!" });
+  
+  const user = users.find((user) => user.username === username);
+  if(!user){
+    return response.status(404).json({error:'User not found!'})
   }
-
-  request.user = userExist;
-
+  request.user = user;
   return next();
 }
 
-app.post("/users", (request, response) => {
+app.post("/users",(request, response) => {
   const { name, username } = request.body;
+  
   const userExist = users.find((user) => user.username === username);
-
+ 
   if (userExist) {
     return response.status(400).json({ error: "User already exist" });
   }
 
-  const id = uuidv4();
-
-  users.push({
+  const user = {
+    id:uuidv4(),
+    name, 
     username,
-    name,
-    id,
-    todos: [],
-  });
+    todos:[]
+  }
 
-  console.log(users);
-  return response.status(201).json("User Created!");
+    users.push(user);
+  return response.status(201).json(user);
 });
 
 app.get("/todos", checksExistsUserAccount, (request, response) => {
   const { user } = request;
   const todos = user.todos;
-
+  
   response.status(200).json(todos);
 });
 
 app.post("/todos", checksExistsUserAccount, (request, response) => {
-  const { title } = request.body;
+  const { title,deadline } = request.body;
   const { user } = request;
 
   const todo = {
+    id: uuidv4(),
     title,
     done: false,
-    deadline: new Date(),
-    created_at: new Date(),
-    id: uuidv4(),
+    deadline: new Date(deadline),
+    created_at:new Date(),
+
   };
   user.todos.push(todo);
 
-  return response.status(201).json(user);
+  console.log(todo)
+  return response.status(201).json(todo);
 });
 
 app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
-  const { title } = request.body;
-  const id = request.params.id;
-  const { user } = request;
+   const { title, deadline } = request.body;
+   const id = request.params.id;
+   const { user } = request;
 
-  const updatedTodo = user.todos.map((todo) => {
-    if (todo.id == id) {
-      todo.deadline = new Date();
-      todo.title = title;
+   const updatedTodo = user.todos.map((todo) => {
+     if (todo.id == id) {
+       todo.deadline = new Date(deadline);
+       todo.title = title;
 
-      return response.status(201).json(todo);
-    }
-  });
+     return response.status(201).json(todo);
+     }
+   });
 
   return response.status(400).json({ error: "invalid operation" });
 });
 
 app.patch("/todos/:id/done", checksExistsUserAccount, (request, response) => {
-  const { id } = request.params;
-  const { user } = request;
-  const finalizeTodo = user.todos.map((todo) => {
-    if (todo.id == id) {
-      todo.deadline = new Date();
-      todo.done = true;
+   const { id,deadline } = request.params;
+   const { user } = request;
+   const finalizeTodo = user.todos.map((todo) => {
+     if (todo.id == id) {
+       todo.deadline = new Date(deadline);
+       todo.done = true;
 
-      return response.status(201).json(todo);
-    }
-  });
-
-  return response.status(400).json({ error: "Invalid Operation" });
+       return response.status(200).json(todo);
+     }
+   })
+   return response.status(404).json({ error: "Invalid Operation" });
 });
 
 app.delete("/todos/:id", checksExistsUserAccount, (request, response) => {
-    const {id} = request.params;
-    const {user} = request;
+     const {id} = request.params;
+     const {user} = request;
 
-    console.log(id)
+     console.log(id)
 
-    const filterTodo = user.todos.filter((todo)=> todo.id == id);
-    user.todos.splice(filterTodo,1)
-    return response.status(200).json(user.todos);
+     const filterTodo = user.todos.filter((todo)=> todo.id == id);
+     if(!filterTodo){
+      return response.status(400).json({error:"Todo não encontrado"});
+     }
+     user.todos.splice(filterTodo,1)
+     return response.status(200).json(user.todos);
 });
 
 module.exports = app;
